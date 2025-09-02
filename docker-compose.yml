@@ -1,0 +1,65 @@
+version: '3.8'
+
+services:
+  # Applicazione Movie Collection
+  movie-app:
+    build: .
+    container_name: movie-collection-app
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - MONGODB_URI=mongodb://mongodb:27017/movie-collection
+      - TMDB_API_KEY=${TMDB_API_KEY}
+      - TMDB_BASE_URL=https://api.themoviedb.org/3
+      - TMDB_IMAGE_BASE_URL=https://image.tmdb.org/t/p/w500
+      - RATE_LIMIT_WINDOW_MS=900000
+      - RATE_LIMIT_MAX_REQUESTS=100
+    depends_on:
+      - mongodb
+    networks:
+      - movie-network
+    volumes:
+      # Volume per i log (opzionale)
+      - ./logs:/usr/src/app/logs
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/api/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) })"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Database MongoDB
+  mongodb:
+    image: mongo:7-jammy
+    container_name: movie-collection-db
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    environment:
+      - MONGO_INITDB_DATABASE=movie-collection
+    volumes:
+      # Persistenza dati MongoDB
+      - mongodb_data:/data/db
+      # Script di inizializzazione (opzionale)
+      - ./mongo-init:/docker-entrypoint-initdb.d:ro
+    networks:
+      - movie-network
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+# Volumi per la persistenza dei dati
+volumes:
+  mongodb_data:
+    driver: local
+
+# Rete personalizzata per i container
+networks:
+  movie-network:
+    driver: bridge

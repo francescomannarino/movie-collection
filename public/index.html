@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Movie Collection - La Tua Collezione di Film</title>
+    <meta name="description" content="Gestisci la tua collezione personale di film DVD e Blu-ray">
+    
+    <!-- CSS -->
+    <link rel="stylesheet" href="css/styles.css">
+    
+    <!-- Font Awesome per le icone -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="images/favicon.ico">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <i class="fas fa-film"></i>
+                    <h1>Movie Collection</h1>
+                </div>
+                <nav class="nav">
+                    <button class="nav-btn active" data-section="library">
+                        <i class="fas fa-home"></i>
+                        Libreria
+                    </button>
+                    <button class="nav-btn" data-section="search">
+                        <i class="fas fa-search"></i>
+                        Ricerca
+                    </button>
+                    <button class="nav-btn" data-section="backup">
+                        <i class="fas fa-download"></i>
+                        Backup
+                    </button>
+                </nav>
+                <div class="stats">
+                    <div class="stat-item">
+                        <span class="stat-number" id="totalMovies">0</span>
+                        <span class="stat-label">Film</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main">
+        <!-- Libreria Section -->
+        <section id="library" class="section active">
+            <div class="container">
+                <div class="section-header">
+                    <h2>La Tua Libreria</h2>
+                    <div class="library-controls">
+                        <!-- Filtri -->
+                        <div class="filters">
+                            <select id="formatFilter" class="filter-select">
+                                <option value="">Tutti i formati</option>
+                                <option value="dvd">Solo DVD</option>
+                                <option value="bluray">Solo Blu-ray</option>
+                            </select>
+                            <select id="sortBy" class="filter-select">
+                                <option value="dateAdded">Data aggiunta</option>
+                                <option value="title">Titolo</option>
+                                <option value="year">Anno</option>
+                                <option value="voteAverage">Voto</option>
+                            </select>
+                            <select id="sortOrder" class="filter-select">
+                                <option value="desc">Decrescente</option>
+                                <option value="asc">Crescente</option>
+                            </select>
+                        </div>
+                        <!-- Ricerca nella libreria -->
+                        <div class="library-search">
+                            <input type="text" id="librarySearch" placeholder="Cerca nella tua libreria...">
+                            <i class="fas fa-search"></i>
+                            <button type="button" class="clear-search-btn" id="clearLibrarySearch" title="Pulisci ricerca">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Loading State -->
+                <div id="libraryLoading" class="loading">
+                    <div class="spinner"></div>
+                    <p>Caricamento libreria...</p>
+                </div>
+
+                <!-- Empty State -->
+                <div id="libraryEmpty" class="empty-state" style="display: none;">
+                    <i class="fas fa-film"></i>
+                    <h3>La tua libreria è vuota</h3>
+                    <p>Inizia ad aggiungere film alla tua collezione!</p>
+                    <button class="btn btn-primary" data-action="switch-section" data-section="search">
+                        <i class="fas fa-plus"></i>
+                        Aggiungi primo film
+                    </button>
+                </div>
+
+                <!-- Movies Grid -->
+                <div id="moviesGrid" class="movies-grid"></div>
+
+                <!-- Paginazione -->
+                <div id="libraryPagination" class="pagination" style="display: none;"></div>
+            </div>
+        </section>
+
+        <!-- Ricerca Section -->
+        <section id="search" class="section">
+            <div class="container">
+                <div class="section-header">
+                    <h2>Cerca e Aggiungi Film</h2>
+                </div>
+
+                <!-- Search Form -->
+                <div class="search-form">
+                    <div class="search-input-container">
+                        <input type="text" id="searchInput" placeholder="Cerca film per titolo...">
+                        <button id="searchBtn" class="search-btn">
+                            <i class="fas fa-search"></i>
+                        </button>
+                        <button type="button" class="clear-search-btn" id="clearSearchInput" title="Pulisci ricerca">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <div id="searchSuggestions" class="search-suggestions"></div>
+                </div>
+
+                <!-- Search Loading -->
+                <div id="searchLoading" class="loading" style="display: none;">
+                    <div class="spinner"></div>
+                    <p>Ricerca in corso...</p>
+                </div>
+
+                <!-- Search Results -->
+                <div id="searchResults" class="search-results"></div>
+
+                <!-- Search Pagination -->
+                <div id="searchPagination" class="pagination" style="display: none;"></div>
+            </div>
+        </section>
+
+        <!-- Backup Section -->
+        <section id="backup" class="section">
+            <div class="container">
+                <div class="section-header">
+                    <h2>Backup e Ripristino</h2>
+                    <p>Esporta la tua collezione o importa da un backup precedente</p>
+                </div>
+
+                <div class="backup-grid">
+                    <!-- Export -->
+                    <div class="backup-card">
+                        <h3><i class="fas fa-download"></i> Esporta Collezione</h3>
+                        <p>Salva la tua collezione in diversi formati</p>
+                        <div class="backup-actions">
+                            <button class="btn btn-primary" data-action="export-data" data-format="json">
+                                <i class="fas fa-file-code"></i>
+                                Export JSON
+                            </button>
+                            <button class="btn btn-secondary" data-action="export-data" data-format="mongodb">
+                                <i class="fas fa-database"></i>
+                                Export MongoDB
+                            </button>
+                            <button class="btn btn-secondary" data-action="export-data" data-format="csv">
+                                <i class="fas fa-file-csv"></i>
+                                Export CSV
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Import -->
+                    <div class="backup-card">
+                        <h3><i class="fas fa-upload"></i> Importa Backup</h3>
+                        <p>Ripristina la collezione da un file di backup</p>
+                        <div class="import-form">
+                            <input type="file" id="backupFile" accept=".json" style="display: none;">
+                            <button class="btn btn-primary" data-action="select-backup-file">
+                                <i class="fas fa-folder-open"></i>
+                                Seleziona File
+                            </button>
+                            <div class="import-options">
+                                <label>
+                                    <input type="radio" name="importMode" value="merge" checked>
+                                    Unisci con collezione esistente
+                                </label>
+                                <label>
+                                    <input type="radio" name="importMode" value="replace">
+                                    Sostituisci collezione esistente
+                                </label>
+                            </div>
+                            <button id="importBtn" class="btn btn-success" disabled data-action="import-data">
+                                <i class="fas fa-upload"></i>
+                                Importa
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Stats -->
+                    <div class="backup-card">
+                        <h3><i class="fas fa-chart-bar"></i> Statistiche Collezione</h3>
+                        <div id="collectionStats" class="stats-grid">
+                            <div class="stat-item">
+                                <span class="stat-number" id="statTotalMovies">0</span>
+                                <span class="stat-label">Totale Film</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-number" id="statDvdCount">0</span>
+                                <span class="stat-label">DVD</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-number" id="statBlurayCount">0</span>
+                                <span class="stat-label">Blu-ray</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-number" id="statBothCount">0</span>
+                                <span class="stat-label">Entrambi</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Movie Detail Modal -->
+    <div id="movieModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle">Dettagli Film</h3>
+                <button class="modal-close" data-action="close-modal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body" id="modalBody">
+                <!-- Content will be dynamically inserted -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div id="toastContainer" class="toast-container"></div>
+
+    <!-- JavaScript -->
+    <script src="js/api.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
