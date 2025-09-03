@@ -7,7 +7,9 @@
     "start": "npx http-server public -p 3000 -c-1 --cors",
     "dev": "npx http-server public -p 3000 -c-1 --cors",
     "serve": "npx http-server public -p 3000 -c-1 --cors",
-    "build": "echo 'No build process needed for static frontend'",
+    "build": "./build.sh",
+    "build:prod": "BACKEND_URL=http://192.168.1.20:3001 ./build.sh",
+    "serve:build": "npx http-server dist -p 3000 -c-1 --cors",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": ["movie", "collection", "frontend", "webapp"],

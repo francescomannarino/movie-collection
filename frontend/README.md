@@ -76,36 +76,116 @@ La configurazione è automatica basata sull'URL da cui si accede al frontend.
 
 ## Deploy
 
-### Server Web Semplice
-Il frontend è una Single Page Application (SPA) statica che può essere servita da qualsiasi server web:
-
+### Sviluppo Locale
 ```bash
-# Usando http-server (incluso nelle dipendenze)
+# Avvio standard per sviluppo
 npm start
 
-# Usando nginx, Apache, o altro server web
-# Servire la cartella public/ sulla porta desiderata
+# Il frontend sarà disponibile su http://localhost:3000
+# Si collegherà automaticamente al backend su localhost:3001
 ```
 
-### Deploy Separato
-Per deployare frontend e backend su macchine diverse:
+### Deploy Separato (Frontend e Backend su macchine diverse)
 
-1. **Frontend**: Servire la cartella `public/` su una macchina (porta 3000)
-2. **Backend**: Eseguire il backend su un'altra macchina (porta 3001)
-3. **Configurazione**: Il frontend rileverà automaticamente l'IP e si collegherà al backend sulla porta 3001
+Il progetto include uno script di build automatico per gestire il deploy su macchine separate.
 
-### Esempio con nginx
-```nginx
-server {
-    listen 3000;
-    server_name localhost;
-    
-    location / {
-        root /path/to/frontend/public;
-        try_files $uri $uri/ /index.html;
-    }
-}
+#### Script di Build
+Lo script `build.sh` prepara automaticamente il frontend per il deploy:
+
+```bash
+# Build per sviluppo locale (backend su localhost:3001)
+npm run build
+
+# Build per produzione con backend specifico
+BACKEND_URL=http://192.168.1.20:3001 npm run build
+
+# Build predefinito per produzione
+npm run build:prod
+
+# Test del build localmente
+npm run serve:build
 ```
+
+#### Processo di Build
+Lo script di build:
+1. 📁 **Copia** tutti i file dalla cartella `public/` in `dist/`
+2. ⚙️ **Genera** un `config.js` personalizzato con l'URL del backend specificato
+3. 📝 **Modifica** `index.html` per caricare la configurazione corretta
+4. ✅ **Crea** una cartella `dist/` pronta per il deploy
+
+#### Deploy Step-by-Step
+
+1. **Prepara il build:**
+   ```bash
+   # Specifica l'IP/URL del tuo backend
+   BACKEND_URL=http://192.168.1.20:3001 npm run build
+   ```
+
+2. **Copia i file sul server:**
+   ```bash
+   # Esempio con rsync
+   rsync -av --delete dist/ user@frontend-server:/var/www/movie-collection/
+   
+   # Esempio con scp
+   scp -r dist/* user@frontend-server:/var/www/movie-collection/
+   ```
+
+3. **Configura il server web:**
+   ```nginx
+   # Esempio nginx
+   server {
+       listen 3000;
+       server_name localhost;
+       
+       location / {
+           root /var/www/movie-collection;
+           try_files $uri $uri/ /index.html;
+       }
+   }
+   ```
+
+#### Configurazione Automatica vs Manuale
+
+**Modalità Automatica (sviluppo):**
+- Il frontend rileva automaticamente l'IP della macchina
+- Si collega al backend sulla stessa macchina (porta 3001)
+
+**Modalità Manuale (produzione):**
+- Lo script di build configura l'URL del backend specifico
+- Perfetto per deploy su macchine separate
+
+#### Struttura dopo il Build
+```
+dist/
+├── config.js          ← Configurazione generata per il backend specificato
+├── index.html         ← Modificato per caricare config.js locale  
+├── css/
+│   └── styles.css
+├── js/
+│   ├── api.js
+│   ├── app.js
+│   └── ui.js
+├── images/
+│   └── favicon.ico
+└── sw.js
+```
+
+#### Vantaggi dello Script di Build
+- ✅ **Automatizza** il processo di deploy
+- ✅ **Gestisce** automaticamente i riferimenti ai file
+- ✅ **Permette** configurazioni diverse per ambienti diversi  
+- ✅ **Crea** una cartella pronta per il deploy
+- ✅ **Mantiene** il codice sorgente pulito
+
+#### Note Tecniche
+
+**Gestione dei Path:**
+- In **sviluppo**: `index.html` carica `../config.js` (dalla cartella parent)
+- In **produzione**: lo script di build modifica automaticamente il path in `config.js` (stessa cartella)
+
+**File di Configurazione:**
+- `config.js` (root): configurazione per sviluppo con modalità `auto`
+- `dist/config.js` (generato): configurazione per produzione con modalità `manual`
 
 ## Caratteristiche
 
