@@ -3,7 +3,7 @@ FROM node:18-alpine
 
 # Impostare le variabili d'ambiente
 ENV NODE_ENV=production
-ENV PORT=3000
+ENV PORT=3001
 
 # Creare la directory dell'applicazione nel container
 WORKDIR /usr/src/app
@@ -31,11 +31,11 @@ RUN chown -R movieapp:nodejs /usr/src/app
 USER movieapp
 
 # Esporre la porta dell'applicazione
-EXPOSE 3000
+EXPOSE 3001
 
 # Definire il comando di salute per Docker
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD node -e "require('http').get('http://localhost:3000/api/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) })"
+  CMD node -e "require('http').get('http://localhost:3001/api/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) })"
 
 # Comando per avviare l'applicazione
 CMD ["npm", "start"]

@@ -7,10 +7,10 @@ services:
     container_name: movie-collection-app
     restart: unless-stopped
     ports:
-      - "3000:3000"
+      - "3001:3001"
     environment:
       - NODE_ENV=production
-      - PORT=3000
+      - PORT=3001
       - MONGODB_URI=mongodb://mongodb:27017/movie-collection
       - TMDB_API_KEY=${TMDB_API_KEY}
       - TMDB_BASE_URL=https://api.themoviedb.org/3
@@ -25,7 +25,7 @@ services:
       # Volume per i log (opzionale)
       - ./logs:/usr/src/app/logs
     healthcheck:
-      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/api/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) })"]
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3001/api/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) })"]
       interval: 30s
       timeout: 10s
       retries: 3

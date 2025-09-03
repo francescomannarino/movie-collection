@@ -2,6 +2,16 @@
 
 Una webapp completa per gestire la tua collezione personale di film in formato DVD e Blu-ray, con integrazione TMDB per la ricerca e informazioni sui film.
 
+## 🏗️ Architettura Separata
+
+Il progetto è strutturato con **frontend** e **backend** separati per permettere deployment indipendenti:
+
+- **Frontend**: Applicazione web statica (porta 3000)
+- **Backend**: API REST con Express.js (porta 3001) 
+- **Database**: MongoDB (porta 27017)
+
+Questa architettura permette di deployare i componenti su macchine diverse per scalabilità e flessibilità.
+
 ## ✨ Caratteristiche Principali
 
 - **📚 Libreria Personale**: Visualizza la tua collezione con poster, titoli e formati posseduti
@@ -19,71 +29,89 @@ Una webapp completa per gestire la tua collezione personale di film in formato D
 - **MongoDB** (locale o cloud)
 - **Account TMDB** per API key gratuita
 
-### 1. Clone e Setup
+### Opzione 1: Setup Completo (Raccomandato)
 
+#### 1. Backend Setup
 ```bash
-# Clona il repository (o scarica i file)
-cd movie_collection_webapp
+cd backend
 
-# Installa dipendenze
+# Installa dipendenze backend
 npm install
 
 # Copia il template delle variabili di ambiente
 cp env.template .env
-```
 
-### 2. Configurazione
+# Configura .env con i tuoi valori:
+# MONGODB_URI=mongodb://localhost:27017/movie-collection
+# TMDB_API_KEY=la_tua_api_key_qui
+# PORT=3001
 
-Modifica il file `.env` con i tuoi valori:
-
-```env
-# Database MongoDB
-MONGODB_URI=mongodb://localhost:27017/movie-collection
-
-# TMDB API (registrati su https://www.themoviedb.org/settings/api)
-TMDB_API_KEY=la_tua_api_key_qui
-
-# Configurazione Server
-PORT=3000
-NODE_ENV=development
-```
-
-### 3. Inizializzazione
-
-```bash
-# Esegui setup automatico
+# Setup database
 npm run setup
 
-# Avvia il server
+# Avvia backend (porta 3001)
 npm start
 ```
 
-### 4. Accesso
+#### 2. Frontend Setup
+```bash
+cd frontend
 
-Apri il browser su: **http://localhost:3000**
+# Installa dipendenze frontend
+npm install
+
+# Avvia frontend (porta 3000)
+npm start
+```
+
+#### 3. Accesso
+- **Frontend**: http://localhost:3000
+- **Backend API**: http://localhost:3001/api
+
+### Opzione 2: Setup Legacy (Monolitico)
+
+```bash
+# Dalla cartella root del progetto
+npm install
+cp env.template .env
+npm run setup
+npm start
+```
+
+**Nota**: Il setup legacy avvia tutto sulla porta 3000 ma è deprecato. Si raccomanda l'uso della struttura separata.
 
 ## 📚 Guide Dettagliate
 
 Per approfondimenti e configurazioni avanzate, consulta le seguenti guide:
 
 - **[🚀 Quick Start Guide](QUICK_START.md)** - Guida rapida per iniziare subito
+- **[📱 Frontend Guide](frontend/README.md)** - Documentazione frontend separato
+- **[🔧 Backend Guide](backend/README.md)** - Documentazione backend API
 - **🐳 [Docker Setup Guide](DOCKER_SETUP.md)** - Configurazione completa con Docker
 - **⚙️ [PM2 Production Guide](PM2_GUIDE.md)** - Deploy in produzione con PM2
 
 ## 🛠️ Comandi Disponibili
 
+### Backend (cartella backend/)
 ```bash
-# Avvio normale
-npm start
+npm start          # Avvia backend (produzione)
+npm run dev        # Modalità sviluppo con nodemon
+npm run setup      # Setup database iniziale
+npm run pm2:start  # Avvia con PM2
+```
 
-# Modalità sviluppo (auto-reload)
-npm run dev
+### Frontend (cartella frontend/)
+```bash
+npm start          # Avvia frontend su porta 3000
+npm run dev        # Alias per npm start
+npm run serve      # Alias per npm start
+```
 
-# Setup iniziale
-npm run setup
-
-# Setup senza dati di esempio
-npm run setup -- --no-samples
+### Legacy (cartella root)
+```bash
+npm start          # Avvia server monolitico (deprecato)
+npm run dev        # Modalità sviluppo (deprecato)
+npm run setup      # Setup database (deprecato)
 ```
 
 ## 📋 API Endpoints
@@ -164,35 +192,46 @@ npm run setup -- --no-samples
 
 ## 🏗️ Struttura del Progetto
 
+### Nuova Struttura Separata (Raccomandata)
+
 ```
 movie_collection_webapp/
-├── config/                 # Configurazioni
-│   ├── database.js         # Connessione MongoDB
-│   └── tmdb.js            # Servizio TMDB API
-├── middleware/             # Middleware Express
-│   ├── errorHandler.js    # Gestione errori
-│   └── rateLimiter.js     # Rate limiting
-├── models/                 # Modelli MongoDB
-│   └── Movie.js           # Schema film
-├── routes/                 # Route API
-│   ├── movies.js          # Gestione collezione
-│   ├── search.js          # Ricerca TMDB
-│   └── backup.js          # Export/import
-├── public/                 # Frontend
-│   ├── index.html         # Pagina principale
-│   ├── css/
-│   │   └── styles.css     # Stili CSS
-│   ├── js/
-│   │   ├── api.js         # Servizio API
-│   │   ├── ui.js          # Componenti UI
-│   │   └── app.js         # App principale
-│   └── images/            # Immagini
-├── server.js              # Server Express
-├── setup.js               # Script setup
-├── package.json           # Dipendenze
-├── env.template           # Template variabili
-└── README.md              # Documentazione
+├── backend/                # Backend API (porta 3001)
+│   ├── config/             # Configurazioni
+│   │   ├── database.js     # Connessione MongoDB
+│   │   └── tmdb.js         # Servizio TMDB API
+│   ├── middleware/         # Middleware Express
+│   │   ├── errorHandler.js # Gestione errori
+│   │   └── rateLimiter.js  # Rate limiting
+│   ├── models/             # Modelli MongoDB
+│   │   └── Movie.js        # Schema film
+│   ├── routes/             # Route API
+│   │   ├── movies.js       # Gestione collezione
+│   │   ├── search.js       # Ricerca TMDB
+│   │   └── backup.js       # Export/import
+│   ├── server.js           # Server Express
+│   ├── setup.js            # Script setup
+│   ├── package.json        # Dipendenze backend
+│   └── env.template        # Template variabili
+├── frontend/               # Frontend SPA (porta 3000)
+│   ├── public/
+│   │   ├── index.html      # Pagina principale
+│   │   ├── css/
+│   │   │   └── styles.css  # Stili CSS
+│   │   ├── js/
+│   │   │   ├── api.js      # Servizio API (punta a :3001)
+│   │   │   ├── ui.js       # Componenti UI
+│   │   │   └── app.js      # App principale
+│   │   └── images/         # Immagini
+│   ├── package.json        # Dipendenze frontend
+│   └── README.md           # Documentazione frontend
+├── README.md               # Documentazione principale
+└── [file legacy...]        # File della struttura precedente
 ```
+
+### Struttura Legacy (Deprecata)
+
+I file della struttura monolitica sono ancora presenti nella root per compatibilità ma si raccomanda l'uso della nuova struttura separata.
 
 ## 🎨 Funzionalità Frontend
 
@@ -319,23 +358,57 @@ npm install
 
 ## 🚀 Deploy in Produzione
 
-### Variabili di Ambiente
+### Deploy Separato su Tre Macchine
 
-```env
-NODE_ENV=production
-MONGODB_URI=mongodb+srv://...
-TMDB_API_KEY=...
-PORT=80
+#### Macchina 1: Frontend (Porta 3000)
+```bash
+# Su macchina frontend
+cd frontend
+npm install --production
+npm start
+
+# O con nginx
+nginx -c /path/to/nginx.conf
 ```
 
-### Build e Avvio
-
+#### Macchina 2: Backend API (Porta 3001)
 ```bash
-# Installa dipendenze di produzione
+# Su macchina backend
+cd backend
 npm install --production
 
+# Configura .env per produzione
+NODE_ENV=production
+MONGODB_URI=mongodb://[IP_MONGODB]:27017/movie-collection
+TMDB_API_KEY=your_api_key
+PORT=3001
+
 # Avvia con PM2
-npm install -g pm2
+npm run pm2:start:prod
+```
+
+#### Macchina 3: MongoDB (Porta 27017)
+```bash
+# Su macchina database
+mongod --bind_ip_all --port 27017
+
+# O con Docker
+docker run -d -p 27017:27017 --name mongodb mongo:latest
+```
+
+### Deploy Legacy (Una Macchina)
+
+```bash
+# Dalla root del progetto
+npm install --production
+
+# Configura .env
+NODE_ENV=production
+MONGODB_URI=mongodb://localhost:27017/movie-collection
+TMDB_API_KEY=...
+PORT=80
+
+# Avvia con PM2
 pm2 start server.js --name "movie-collection"
 pm2 save
 pm2 startup

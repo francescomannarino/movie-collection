@@ -8,6 +8,7 @@ const path = require('path');
 const connectDB = require('./config/database');
 const { generalLimiter } = require('./middleware/rateLimiter');
 const { errorHandler, notFound } = require('./middleware/errorHandler');
+const { config, getCorsConfig, printConfigInfo } = require('./config');
 
 // Import routes
 const movieRoutes = require('./routes/movies');
@@ -15,7 +16,7 @@ const searchRoutes = require('./routes/search');
 const backupRoutes = require('./routes/backup');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = config.server.port;
 
 // Connessione MongoDB
 connectDB();
@@ -32,32 +33,15 @@ app.use(helmet({
       scriptSrcAttr: ["'none'"],
       connectSrc: ["'self'"],
       // Rimuovi upgrade-insecure-requests per sviluppo locale
-      upgradeInsecureRequests: process.env.NODE_ENV === 'production' ? [] : null
+      upgradeInsecureRequests: config.security.upgradeInsecureRequests ? [] : null
     }
   },
   // Disabilita HSTS in sviluppo per evitare problemi con HTTP su LAN
-  hsts: process.env.NODE_ENV === 'production'
+  hsts: config.security.enableHSTS
 }));
 
-// Middleware CORS - Configurato per accesso LAN
-app.use(cors({
-  origin: process.env.NODE_ENV === 'production' 
-    ? ['https://yourdomain.com'] // Sostituire con il dominio di produzione
-    : function(origin, callback) {
-        // In sviluppo, permetti tutte le origini dalla rete locale
-        if (!origin || 
-            origin.startsWith('http://localhost:') ||
-            origin.startsWith('http://127.0.0.1:') ||
-            origin.match(/^http:\/\/192\.168\.\d+\.\d+:\d+$/) ||
-            origin.match(/^http:\/\/10\.\d+\.\d+\.\d+:\d+$/) ||
-            origin.match(/^http:\/\/172\.(1[6-9]|2[0-9]|3[0-1])\.\d+\.\d+:\d+$/)) {
-          callback(null, true);
-        } else {
-          callback(new Error('Non permesso da CORS'));
-        }
-      },
-  credentials: true
-}));
+// Middleware CORS - Configurato dinamicamente per frontend separato e accesso LAN
+app.use(cors(getCorsConfig()));
 
 // Rate limiting
 app.use('/api/', generalLimiter);
@@ -79,25 +63,7 @@ app.use((req, res, next) => {
   next();
 });
 
-// Serve file statici con headers appropriati per LAN
-app.use(express.static(path.join(__dirname, 'public'), {
-  etag: false,
-  lastModified: false,
-  setHeaders: function (res, path, stat) {
-    // Headers per migliorare la compatibilità mobile e LAN
-    res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
-    res.set('Pragma', 'no-cache');
-    res.set('Expires', '0');
-    
-    // Headers specifici per CSS e JS
-    if (path.endsWith('.css')) {
-      res.set('Content-Type', 'text/css; charset=utf-8');
-    }
-    if (path.endsWith('.js')) {
-      res.set('Content-Type', 'application/javascript; charset=utf-8');
-    }
-  }
-}));
+// Il backend non serve più file statici - questi sono gestiti dal frontend separato
 
 // Logging middleware con informazioni dettagliate per debug LAN
 app.use((req, res, next) => {
@@ -121,20 +87,70 @@ app.get('/api/health', (req, res) => {
   res.json({
     status: 'OK',
     timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV || 'development',
-    version: '1.0.0'
+    environment: config.server.environment,
+    version: '1.0.0',
+    server: {
+      host: config.server.host,
+      port: config.server.port
+    }
   });
 });
+
+// Endpoint per configurazione CORS (solo in sviluppo)
+if (config.server.environment === 'development') {
+  const { addCorsOrigin, removeCorsOrigin } = require('./config');
+  
+  app.get('/api/config/cors', (req, res) => {
+    res.json({
+      environment: config.server.environment,
+      customOrigins: config.cors.customOrigins,
+      developmentPatterns: config.cors.developmentPatterns.map(p => p.toString())
+    });
+  });
+  
+  app.post('/api/config/cors/add', (req, res) => {
+    const { origin } = req.body;
+    if (!origin) {
+      return res.status(400).json({ error: 'Origin richiesto' });
+    }
+    
+    try {
+      addCorsOrigin(origin);
+      res.json({ 
+        success: true, 
+        message: `Origine ${origin} aggiunta`,
+        customOrigins: config.cors.customOrigins 
+      });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+  
+  app.delete('/api/config/cors/remove', (req, res) => {
+    const { origin } = req.body;
+    if (!origin) {
+      return res.status(400).json({ error: 'Origin richiesto' });
+    }
+    
+    try {
+      removeCorsOrigin(origin);
+      res.json({ 
+        success: true, 
+        message: `Origine ${origin} rimossa`,
+        customOrigins: config.cors.customOrigins 
+      });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+}
 
 // API Routes
 app.use('/api/movies', movieRoutes);
 app.use('/api/search', searchRoutes);
 app.use('/api/backup', backupRoutes);
 
-// Serve frontend per tutte le altre rotte
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
+// Il backend non serve il frontend - rimuovo catch-all route
 
 // Middleware per gestione errori
 app.use(notFound);
@@ -157,47 +173,9 @@ process.on('SIGINT', () => {
   });
 });
 
-// Funzione per ottenere l'indirizzo IP locale
-function getLocalIP() {
-  const { networkInterfaces } = require('os');
-  const nets = networkInterfaces();
-  const results = {};
-
-  for (const name of Object.keys(nets)) {
-    for (const net of nets[name]) {
-      // Skip over non-IPv4 and internal (i.e. 127.0.0.1) addresses
-      if (net.family === 'IPv4' && !net.internal) {
-        if (!results[name]) {
-          results[name] = [];
-        }
-        results[name].push(net.address);
-      }
-    }
-  }
-  
-  // Restituisce il primo IP trovato
-  for (const name of Object.keys(results)) {
-    if (results[name].length > 0) {
-      return results[name][0];
-    }
-  }
-  return 'localhost';
-}
-
 // Avvio server su tutti gli indirizzi di rete
-const server = app.listen(PORT, '0.0.0.0', () => {
-  const localIP = getLocalIP();
-  console.log(`
-🎬 Movie Collection WebApp
-🚀 Server avviato sulla porta ${PORT}
-🌐 URL Locale: http://localhost:${PORT}
-📱 URL LAN: http://${localIP}:${PORT}
-📊 Ambiente: ${process.env.NODE_ENV || 'development'}
-📅 Avviato il: ${new Date().toLocaleString('it-IT')}
-
-💡 Per accedere da smartphone/tablet:
-   Usa l'URL LAN: http://${localIP}:${PORT}
-  `);
+const server = app.listen(PORT, config.server.host, () => {
+  printConfigInfo();
 });
 
 module.exports = app;

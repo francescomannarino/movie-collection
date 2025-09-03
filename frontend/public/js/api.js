@@ -1,14 +1,88 @@
 // API Service per comunicazione con il backend
 class ApiService {
     constructor() {
-        this.baseUrl = '/api';
+        // Aspetta che la configurazione sia caricata
+        this.configLoaded = this.waitForConfig();
         this.cache = new Map();
-        this.cacheTimeout = 5 * 60 * 1000; // 5 minuti
+        this.cacheTimeout = 5 * 60 * 1000; // Default 5 minuti (può essere sovrascritto dalla config)
+        
+        // Inizializza quando la configurazione è pronta
+        this.configLoaded.then(() => {
+            this.initializeFromConfig();
+        });
+    }
+
+    // Aspetta che la configurazione globale sia disponibile
+    async waitForConfig() {
+        let attempts = 0;
+        const maxAttempts = 50; // 5 secondi max
+        
+        while (!window.getApiConfig && attempts < maxAttempts) {
+            await new Promise(resolve => setTimeout(resolve, 100));
+            attempts++;
+        }
+        
+        if (!window.getApiConfig) {
+            console.warn('⚠️ Configurazione non trovata, uso impostazioni di fallback');
+            return false;
+        }
+        
+        return true;
+    }
+
+    // Inizializza il servizio con la configurazione caricata
+    initializeFromConfig() {
+        try {
+            const apiConfig = window.getApiConfig ? window.getApiConfig() : null;
+            
+            if (apiConfig) {
+                this.baseUrl = `${apiConfig.baseUrl}/api`;
+                this.cacheTimeout = apiConfig.cacheDuration || this.cacheTimeout;
+                this.timeout = apiConfig.timeout || 10000;
+                this.enableCache = apiConfig.enableCache !== false;
+                
+                console.log('✅ API Service configurato:', {
+                    baseUrl: this.baseUrl,
+                    timeout: this.timeout,
+                    cacheEnabled: this.enableCache,
+                    cacheDuration: this.cacheTimeout
+                });
+            } else {
+                // Fallback alla configurazione automatica
+                this.baseUrl = this.getBackendUrlFallback();
+                console.warn('⚠️ Uso configurazione di fallback:', this.baseUrl);
+            }
+        } catch (error) {
+            console.error('❌ Errore inizializzazione API Service:', error);
+            this.baseUrl = this.getBackendUrlFallback();
+        }
+    }
+
+    // Configurazione di fallback (metodo originale)
+    getBackendUrlFallback() {
+        const protocol = window.location.protocol;
+        const hostname = window.location.hostname;
+        
+        // In sviluppo locale o quando si accede tramite localhost
+        if (hostname === 'localhost' || hostname === '127.0.0.1') {
+            return `${protocol}//localhost:3001/api`;
+        }
+        
+        // Quando si accede tramite IP di rete (LAN), usa lo stesso IP per il backend
+        return `${protocol}//${hostname}:3001/api`;
+    }
+
+    // Ottieni l'URL base corrente (per debug)
+    getCurrentBaseUrl() {
+        return this.baseUrl || this.getBackendUrlFallback();
     }
 
     // Metodo generico per richieste HTTP
     async request(endpoint, options = {}) {
-        const url = `${this.baseUrl}${endpoint}`;
+        // Aspetta che la configurazione sia caricata
+        await this.configLoaded;
+        
+        const url = `${this.getCurrentBaseUrl()}${endpoint}`;
         
         const defaultOptions = {
             headers: {
@@ -18,26 +92,62 @@ class ApiService {
 
         const config = { ...defaultOptions, ...options };
         
-        try {
-            console.log(`🔄 API Request: ${config.method || 'GET'} ${url}`);
+        // Aggiungi timeout se configurato
+        if (this.timeout) {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), this.timeout);
+            config.signal = controller.signal;
             
-            const response = await fetch(url, config);
-            const data = await response.json();
+            try {
+                console.log(`🔄 API Request: ${config.method || 'GET'} ${url} (timeout: ${this.timeout}ms)`);
+                
+                const response = await fetch(url, config);
+                clearTimeout(timeoutId);
+                
+                const data = await response.json();
 
-            if (!response.ok) {
-                throw new Error(data.error || `Errore HTTP: ${response.status}`);
+                if (!response.ok) {
+                    throw new Error(data.error || `Errore HTTP: ${response.status}`);
+                }
+
+                console.log(`✅ API Response: ${url}`, data);
+                return data;
+            } catch (error) {
+                clearTimeout(timeoutId);
+                if (error.name === 'AbortError') {
+                    throw new Error(`Timeout della richiesta (${this.timeout}ms): ${url}`);
+                }
+                console.error(`❌ API Error: ${url}`, error);
+                throw error;
             }
+        } else {
+            // Fallback senza timeout
+            try {
+                console.log(`🔄 API Request: ${config.method || 'GET'} ${url}`);
+                
+                const response = await fetch(url, config);
+                const data = await response.json();
 
-            console.log(`✅ API Response: ${url}`, data);
-            return data;
-        } catch (error) {
-            console.error(`❌ API Error: ${url}`, error);
-            throw error;
+                if (!response.ok) {
+                    throw new Error(data.error || `Errore HTTP: ${response.status}`);
+                }
+
+                console.log(`✅ API Response: ${url}`, data);
+                return data;
+            } catch (error) {
+                console.error(`❌ API Error: ${url}`, error);
+                throw error;
+            }
         }
     }
 
     // Cache helper
     getCached(key) {
+        // Se la cache è disabilitata, non restituire nulla
+        if (!this.enableCache) {
+            return null;
+        }
+        
         const cached = this.cache.get(key);
         if (cached && Date.now() - cached.timestamp < this.cacheTimeout) {
             console.log('📦 Usando cache per:', key);
@@ -48,6 +158,11 @@ class ApiService {
     }
 
     setCache(key, data) {
+        // Se la cache è disabilitata, non salvare nulla
+        if (!this.enableCache) {
+            return;
+        }
+        
         this.cache.set(key, {
             data,
             timestamp: Date.now()
@@ -239,6 +354,48 @@ class ApiService {
         } catch (error) {
             console.error('❌ Health check fallito:', error);
             return { status: 'ERROR', error: error.message };
+        }
+    }
+
+    // ============ DEBUG E CONFIGURAZIONE ============
+
+    // Ottieni informazioni di debug
+    getDebugInfo() {
+        const apiConfig = window.getApiConfig ? window.getApiConfig() : null;
+        return {
+            currentBaseUrl: this.getCurrentBaseUrl(),
+            timeout: this.timeout,
+            enableCache: this.enableCache,
+            cacheTimeout: this.cacheTimeout,
+            cacheSize: this.cache.size,
+            configLoaded: this.configLoaded,
+            apiConfig: apiConfig,
+            fallbackUrl: this.getBackendUrlFallback()
+        };
+    }
+
+    // Ricarica configurazione
+    async reloadConfig() {
+        console.log('🔄 Ricaricamento configurazione API...');
+        await this.initializeFromConfig();
+        console.log('✅ Configurazione ricaricata');
+    }
+
+    // Test connessione con informazioni dettagliate
+    async testConnection() {
+        console.log('🔍 Test connessione API...');
+        console.log('Debug Info:', this.getDebugInfo());
+        
+        try {
+            const start = Date.now();
+            const health = await this.healthCheck();
+            const duration = Date.now() - start;
+            
+            console.log(`✅ Connessione OK (${duration}ms):`, health);
+            return { success: true, duration, health };
+        } catch (error) {
+            console.error('❌ Test connessione fallito:', error);
+            return { success: false, error: error.message };
         }
     }
 }

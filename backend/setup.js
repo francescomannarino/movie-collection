@@ -222,7 +222,7 @@ async function showSystemInfo() {
             log(`TMDB API: Configurato`, 'blue');
         }
         
-        log(`Porta server: ${process.env.PORT || 3000}`, 'blue');
+        log(`Porta server: ${process.env.PORT || 3001}`, 'blue');
         log(`Ambiente: ${process.env.NODE_ENV || 'development'}`, 'blue');
         
     } catch (error) {
@@ -243,7 +243,7 @@ function showUsageExamples() {
     log('', 'reset');
     
     log('Accedi all\'applicazione:', 'cyan');
-    log(`  http://localhost:${process.env.PORT || 3000}`, 'blue');
+    log(`  http://localhost:${process.env.PORT || 3001}`, 'blue');
     log('', 'reset');
     
     log('MongoDB Compass:', 'cyan');
@@ -251,8 +251,8 @@ function showUsageExamples() {
     log('', 'reset');
     
     log('Test API:', 'cyan');
-    log(`  curl http://localhost:${process.env.PORT || 3000}/api/health`, 'blue');
-    log(`  curl http://localhost:${process.env.PORT || 3000}/api/movies`, 'blue');
+    log(`  curl http://localhost:${process.env.PORT || 3001}/api/health`, 'blue');
+    log(`  curl http://localhost:${process.env.PORT || 3001}/api/movies`, 'blue');
     log('', 'reset');
 }
 

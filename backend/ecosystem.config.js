@@ -1,7 +1,7 @@
 module.exports = {
   apps: [{
     // Configurazione principale applicazione
-    name: 'movie-collection-webapp',
+    name: 'movie-collection-backend',
     script: 'server.js',
     
     // Configurazione istanze
@@ -11,13 +11,13 @@ module.exports = {
     // Configurazione ambiente sviluppo
     env: {
       NODE_ENV: 'development',
-      PORT: 3000
+      PORT: 3001
     },
     
     // Configurazione ambiente produzione
     env_production: {
       NODE_ENV: 'production',
-      PORT: 3000,
+      PORT: 3001,
       // Aggiungi qui le tue variabili d'ambiente per produzione
       // MONGODB_URI: 'mongodb://localhost:27017/movie_collection_prod',
       // TMDB_API_KEY: 'your_production_tmdb_api_key'
