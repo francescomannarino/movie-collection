@@ -1,0 +1,43 @@
+{
+  "name": "Movie Collection",
+  "short_name": "Movies",
+  "description": "La tua collezione di film sempre con te",
+  "theme_color": "#0f0f23",
+  "background_color": "#0f0f23",
+  "display": "standalone",
+  "orientation": "portrait",
+  "scope": "/",
+  "start_url": "/",
+  "categories": ["entertainment", "lifestyle"],
+  "lang": "it",
+  "icons": [
+    {
+      "src": "pwa-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "pwa-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Cerca Film",
+      "short_name": "Cerca",
+      "description": "Cerca e aggiungi nuovi film",
+      "url": "/search",
+      "icons": [{ "src": "pwa-192x192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Collezione",
+      "short_name": "Collezione",
+      "description": "Visualizza la tua collezione",
+      "url": "/collection",
+      "icons": [{ "src": "pwa-192x192.png", "sizes": "192x192" }]
+    }
+  ]
+}

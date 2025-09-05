@@ -1,0 +1,385 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* CSS Variables for dynamic viewport height and theming */
+:root {
+  --vh: 1vh;
+  --safe-area-inset-top: env(safe-area-inset-top);
+  --safe-area-inset-bottom: env(safe-area-inset-bottom);
+  --safe-area-inset-left: env(safe-area-inset-left);
+  --safe-area-inset-right: env(safe-area-inset-right);
+  
+  /* Dynamic accent colors - defaults to golden */
+  --accent-primary: #fbbf24;
+  --accent-secondary: #f59e0b;
+  --accent-light: #fef3c7;
+  --accent-dark: #92400e;
+}
+
+/* Base styles */
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+    scroll-behavior: smooth;
+    touch-action: manipulation;
+  }
+
+  body {
+    @apply font-system;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overscroll-behavior: none;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+    
+    /* Default dark theme */
+    @apply text-white bg-cinema-950;
+  }
+
+  /* Light theme styles */
+  body:not(.dark) {
+    @apply text-cinema-900 bg-gray-50;
+  }
+
+  .dark body {
+    @apply text-white bg-cinema-950;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  /* Scrollbar styling */
+  ::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-cinema-900 dark:bg-cinema-900;
+  }
+
+  body:not(.dark) ::-webkit-scrollbar-track {
+    @apply bg-gray-200;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-golden-500 rounded-full;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-golden-400;
+  }
+}
+
+/* Component layer */
+@layer components {
+  /* Native-like button */
+  .btn-native {
+    @apply relative overflow-hidden rounded-xl px-6 py-3 font-medium transition-all duration-200 active:scale-95 touch-manipulation;
+  }
+
+  .btn-primary {
+    @apply btn-native text-cinema-950 shadow-lg;
+    background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+    box-shadow: 0 4px 14px 0 rgba(0, 0, 0, 0.2);
+  }
+
+  .btn-secondary {
+    @apply btn-native glass text-white border border-white/20 hover:bg-white/10;
+  }
+
+  .btn-ghost {
+    @apply btn-native text-cinema-300 hover:bg-cinema-800/50;
+  }
+
+  /* Native-like card */
+  .card-native {
+    @apply glass rounded-2xl p-4 shadow-medium backdrop-blur-xl border border-white/10;
+  }
+
+  /* Native-like input */
+  .input-native {
+    @apply w-full px-4 py-3 rounded-xl transition-all duration-200;
+    /* Dark theme styles */
+    @apply bg-cinema-800/50 border-cinema-700 text-white placeholder-cinema-400;
+    border-color: var(--cinema-700);
+  }
+
+  body:not(.dark) .input-native {
+    @apply bg-white border-gray-300 text-cinema-900 placeholder-gray-500;
+  }
+
+  .input-native:focus {
+    border-color: var(--accent-primary);
+    box-shadow: 0 0 0 2px var(--accent-light);
+  }
+
+  /* Tab bar item */
+  .tab-item {
+    @apply flex-1 flex flex-col items-center justify-center py-2 px-1 transition-all duration-200 touch-manipulation;
+  }
+
+  .tab-item.active {
+    color: var(--accent-primary);
+  }
+
+  .tab-item.active .tab-icon {
+    @apply scale-110;
+  }
+
+  /* Floating action button */
+  .fab {
+    @apply fixed bottom-20 right-4 w-14 h-14 rounded-full shadow-lg flex items-center justify-center text-cinema-950 transition-all duration-300 active:scale-95 z-50 touch-manipulation;
+    background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+    box-shadow: 0 4px 14px 0 rgba(0, 0, 0, 0.2);
+  }
+
+  /* Loading skeleton */
+  .skeleton {
+    @apply animate-pulse bg-cinema-800 rounded;
+  }
+
+  /* Shimmer effect */
+  .shimmer {
+    @apply relative overflow-hidden;
+  }
+
+  .shimmer::after {
+    @apply absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/10 to-transparent animate-shimmer;
+    content: '';
+  }
+
+  /* Pull to refresh */
+  .pull-to-refresh {
+    @apply flex items-center justify-center py-4 text-cinema-400 transition-all duration-300;
+  }
+
+  /* Modal backdrop */
+  .modal-backdrop {
+    @apply fixed inset-0 bg-black/50 backdrop-blur-sm z-40;
+  }
+
+  /* Safe area utilities */
+  .safe-top {
+    padding-top: calc(var(--safe-area-inset-top) + 1rem);
+  }
+
+  .safe-bottom {
+    padding-bottom: calc(var(--safe-area-inset-bottom) + 1rem);
+  }
+
+  /* Dynamic viewport height */
+  .vh-100 {
+    height: calc(var(--vh, 1vh) * 100);
+  }
+
+  .min-vh-100 {
+    min-height: calc(var(--vh, 1vh) * 100);
+  }
+}
+
+/* Utility layer */
+@layer utilities {
+  /* Hardware acceleration */
+  .gpu-accelerated {
+    transform: translateZ(0);
+    will-change: transform;
+  }
+
+  /* Touch-friendly sizing */
+  .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Native-like transitions */
+  .transition-native {
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* Haptic feedback simulation */
+  .haptic-light {
+    animation: haptic-light 0.1s ease-out;
+  }
+
+  .haptic-medium {
+    animation: haptic-medium 0.15s ease-out;
+  }
+
+  .haptic-heavy {
+    animation: haptic-heavy 0.2s ease-out;
+  }
+
+  /* Glass morphism variants */
+  .glass-light {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+  }
+
+  .glass-dark {
+    background: rgba(0, 0, 0, 0.2);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .glass-golden {
+    background: rgba(251, 191, 36, 0.1);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(251, 191, 36, 0.2);
+  }
+
+  /* Glass effect for light/dark themes */
+  .glass {
+    backdrop-filter: blur(10px);
+    /* Light theme glass */
+    background: rgba(255, 255, 255, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+  }
+
+  .dark .glass {
+    /* Dark theme glass */
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+  }
+
+  /* Dynamic accent utilities */
+  .text-accent {
+    color: var(--accent-primary);
+  }
+
+  .text-accent-secondary {
+    color: var(--accent-secondary);
+  }
+
+  .bg-accent {
+    background-color: var(--accent-primary);
+  }
+
+  .bg-accent-secondary {
+    background-color: var(--accent-secondary);
+  }
+
+  .border-accent {
+    border-color: var(--accent-primary);
+  }
+
+  .shadow-accent {
+    box-shadow: 0 0 20px var(--accent-light);
+  }
+
+  /* Cinematic effects */
+  .film-grain {
+    position: relative;
+  }
+
+  .film-grain::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    opacity: 0.03;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+    pointer-events: none;
+  }
+
+  /* Spotlight effect */
+  .spotlight {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .spotlight::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(251, 191, 36, 0.1) 0%, transparent 70%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+  }
+
+  .spotlight:hover::before {
+    opacity: 1;
+  }
+}
+
+/* Keyframes */
+@keyframes haptic-light {
+  0% { transform: scale(1); }
+  50% { transform: scale(0.98); }
+  100% { transform: scale(1); }
+}
+
+@keyframes haptic-medium {
+  0% { transform: scale(1); }
+  50% { transform: scale(0.95); }
+  100% { transform: scale(1); }
+}
+
+@keyframes haptic-heavy {
+  0% { transform: scale(1); }
+  25% { transform: scale(0.92); }
+  75% { transform: scale(1.02); }
+  100% { transform: scale(1); }
+}
+
+/* Responsive design */
+@media (max-width: 320px) {
+  .text-xs { font-size: 0.7rem; }
+  .text-sm { font-size: 0.8rem; }
+}
+
+@media (min-width: 768px) and (orientation: landscape) {
+  .landscape\:flex-row {
+    flex-direction: row;
+  }
+  
+  .landscape\:w-1\/2 {
+    width: 50%;
+  }
+}
+
+/* Dark mode improvements */
+@media (prefers-color-scheme: light) {
+  .auto-theme {
+    @apply bg-white text-cinema-900;
+  }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* High contrast mode */
+@media (prefers-contrast: high) {
+  .glass {
+    background: rgba(0, 0, 0, 0.8);
+    border: 2px solid white;
+  }
+}
+
+/* Focus styles for accessibility */
+.focus-visible:focus-visible {
+  outline: 2px solid #fbbf24;
+  outline-offset: 2px;
+}
+
+/* Print styles */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+}
